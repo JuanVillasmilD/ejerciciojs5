@@ -1,5 +1,6 @@
 /* Estilos para el cuerpo (background) */
 body {
+    color: #f5f5f5;
     background-image: url("bg.jpg");
     background-repeat: no-repeat;
     background-size: cover;

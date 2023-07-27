@@ -1,81 +1,111 @@
-// Función para guardar los datos de vehículos en localStorage
-function guardarVehiculo(marca, modelo, anio, precio, kilometraje, lugar) {
-    const vehiculos = JSON.parse(localStorage.getItem('vehiculos')) || [];
-    vehiculos.push({ marca, modelo, anio, precio, kilometraje, lugar });
-    localStorage.setItem('vehiculos', JSON.stringify(vehiculos));
+// Función para buscar cliente por cédula en el LocalStorage
+function buscarClientePorCedula(cedula) {
+    const clientesString = localStorage.getItem("clientes");
+    const clientes = JSON.parse(clientesString) || [];
+
+    return clientes.find(cliente => cliente.cedula === cedula);
 }
 
-// Función para eliminar una fila de la tabla de vehículos
+// Función para agregar un cliente al LocalStorage
+function agregarCliente(nombre, apellido, cedula) {
+    const clientesString = localStorage.getItem("clientes");
+    const clientes = JSON.parse(clientesString) || [];
+
+    clientes.push({ nombre, apellido, cedula });
+    localStorage.setItem("clientes", JSON.stringify(clientes));
+}
+
+// Función para mostrar mensaje de cliente no registrado y preguntar si desea registrarlo
+function mostrarMensajeClienteNoRegistrado(cedula) {
+    const respuesta = confirm(`Cliente con cédula ${cedula} no registrado. ¿Desea registrarlo?`);
+    if (respuesta) {
+        window.location.href = "clientes.html";
+    }
+}
+
+// Función para eliminar un vehículo de la lista de vehículos y actualizar la tabla
 function eliminarVehiculo(index) {
-    const vehiculos = JSON.parse(localStorage.getItem('vehiculos')) || [];
+    const vehiculosString = localStorage.getItem("vehiculos");
+    const vehiculos = JSON.parse(vehiculosString) || [];
+
     vehiculos.splice(index, 1);
-    localStorage.setItem('vehiculos', JSON.stringify(vehiculos));
-    cargarVehiculos(); // Recargar la tabla para reflejar los cambios
+    localStorage.setItem("vehiculos", JSON.stringify(vehiculos));
+
+    // Mostrar la tabla actualizada
+    mostrarTabla();
 }
 
-// Función para cargar los datos de vehículos desde localStorage y mostrarlos en la tabla
-function cargarVehiculos() {
-    const tablaBody = document.getElementById('tabla-body');
-    const vehiculos = JSON.parse(localStorage.getItem('vehiculos')) || [];
-
-    tablaBody.innerHTML = '';
-
-    vehiculos.forEach((vehiculo, index) => {
-        const row = document.createElement('tr');
-        const marcaCell = document.createElement('td');
-        const modeloCell = document.createElement('td');
-        const anioCell = document.createElement('td');
-        const precioCell = document.createElement('td');
-        const kilometrajeCell = document.createElement('td');
-        const lugarCell = document.createElement('td');
-        const eliminarCell = document.createElement('td');
-        const eliminarIcon = document.createElement('i');
-
-        marcaCell.textContent = vehiculo.marca;
-        modeloCell.textContent = vehiculo.modelo;
-        anioCell.textContent = vehiculo.anio;
-        precioCell.textContent = vehiculo.precio;
-        kilometrajeCell.textContent = vehiculo.kilometraje;
-        lugarCell.textContent = vehiculo.lugar;
-
-        eliminarIcon.classList.add('fas', 'fa-trash', 'delete-icon');
-        eliminarIcon.addEventListener('click', () => eliminarVehiculo(index));
-        eliminarCell.appendChild(eliminarIcon);
-
-        row.appendChild(marcaCell);
-        row.appendChild(modeloCell);
-        row.appendChild(anioCell);
-        row.appendChild(precioCell);
-        row.appendChild(kilometrajeCell);
-        row.appendChild(lugarCell);
-        row.appendChild(eliminarCell);
-
-        tablaBody.appendChild(row);
-    });
-}
-
-// Evento para manejar el envío del formulario de vehículos
-document.getElementById('form').addEventListener('submit', function (event) {
+// Función para procesar el formulario de vehículos
+function procesarFormulario(event) {
     event.preventDefault();
 
-    const marca = document.getElementById('marca').value;
-    const modelo = document.getElementById('modelo').value;
-    const anio = document.getElementById('anio').value;
-    const precio = document.getElementById('precio').value;
-    const kilometraje = document.getElementById('kilometraje').value;
-    const lugar = document.getElementById('lugar').value;
+    const cedulaCliente = document.getElementById("cedulaCliente").value;
+    const cliente = buscarClientePorCedula(cedulaCliente);
 
-    guardarVehiculo(marca, modelo, anio, precio, kilometraje, lugar);
-    cargarVehiculos();
+    if (!cliente) {
+        mostrarMensajeClienteNoRegistrado(cedulaCliente);
+        return;
+    }
 
-    // Limpiar campos del formulario
-    document.getElementById('marca').value = '';
-    document.getElementById('modelo').value = '';
-    document.getElementById('anio').value = '';
-    document.getElementById('precio').value = '';
-    document.getElementById('kilometraje').value = '';
-    document.getElementById('lugar').value = '';
-});
+    const marca = document.getElementById("marca").value;
+    const modelo = document.getElementById("modelo").value;
+    const anio = document.getElementById("anio").value;
+    const kilometraje = document.getElementById("kilometraje").value;
+    const tipoMantenimiento = document.getElementById("tipoMantenimiento").value;
+    const detallesMantenimiento = document.getElementById("detallesMantenimiento").value;
 
-// Cargar los datos de vehículos al cargar la página
-cargarVehiculos();
+    // Agregar el vehículo a la lista de vehículos
+    const vehiculo = {
+        cedulaCliente,
+        marca,
+        modelo,
+        anio,
+        kilometraje,
+        tipoMantenimiento,
+        detallesMantenimiento
+    };
+
+    const vehiculosString = localStorage.getItem("vehiculos");
+    const vehiculos = JSON.parse(vehiculosString) || [];
+
+    vehiculos.push(vehiculo);
+    localStorage.setItem("vehiculos", JSON.stringify(vehiculos));
+
+    // Limpiar el formulario
+    document.getElementById("form").reset();
+
+    // Mostrar la tabla actualizada
+    mostrarTabla();
+
+    console.log("Vehículo registrado:", vehiculo);
+}
+
+// Función para mostrar la tabla con los datos de los vehículos
+function mostrarTabla() {
+    const vehiculosString = localStorage.getItem("vehiculos");
+    const vehiculos = JSON.parse(vehiculosString) || [];
+
+    const tabla = document.getElementById("tablaVehiculos");
+    tabla.innerHTML = ""; // Limpiar la tabla
+
+    for (const [index, vehiculo] of vehiculos.entries()) {
+        const cliente = buscarClientePorCedula(vehiculo.cedulaCliente);
+        let fila = `<tr>
+            <td>${cliente ? cliente.nombre + " " + cliente.apellido : "Cliente no registrado"}</td>
+            <td>${vehiculo.marca}</td>
+            <td>${vehiculo.modelo}</td>
+            <td>${vehiculo.anio}</td>
+            <td>${vehiculo.kilometraje}</td>
+            <td>${vehiculo.tipoMantenimiento}</td>
+            <td>${vehiculo.detallesMantenimiento}</td>
+            <td><button type="button" class="btn btn-danger btn-sm" onclick="eliminarVehiculo(${index})"><i class="fas fa-trash"></i> Borrar</button></td>
+        </tr>`;
+        tabla.innerHTML += fila;
+    }
+}
+
+// Escuchar el evento submit del formulario
+document.getElementById("form").addEventListener("submit", procesarFormulario);
+
+// Mostrar la tabla al cargar la página
+mostrarTabla();
